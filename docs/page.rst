@@ -348,8 +348,9 @@ method for the page.
         return 'PAGE-%d-%s' % ( page.id, page.slug )
     Page.etag = my_etag
 
-    Page.register_request_processors(Page.etag_request_processor)
-    Page.register_response_processors(Page.etag_response_processor)
+    from feincms.module.page import processors
+    Page.register_request_processor(processors.etag_request_processor)
+    Page.register_response_processor(processors.etag_response_processor)
 
 
 Sitemaps
