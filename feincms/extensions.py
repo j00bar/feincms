@@ -148,20 +148,13 @@ class LegacyExtension(Extension):
         self.extension(self.model, self)
 
     def handle_modeladmin(self, modeladmin):
-        if self.fieldsets:
-            modeladmin.fieldsets.extend(self.fieldsets)
-        if self.filter_horizontal:
-            modeladmin.filter_horizontal.extend(self.filter_horizontal)
-        if self.filter_vertical:
-            modeladmin.filter_vertical.extend(self.filter_vertical)
-        if self.list_display:
-            modeladmin.list_display.extend(self.list_display)
-        if self.list_filter:
-            modeladmin.list_filter.extend(self.list_filter)
-        if self.raw_id_fields:
-            modeladmin.raw_id_fields.extend(self.raw_id_fields)
-        if self.search_fields:
-            modeladmin.search_fields.extend(self.search_fields)
+        for attr in ['fieldsets', 'filter_horizontal', 'filter_vertical',
+                     'list_display', 'list_filter', 'raw_id_fields',
+                     'search_fields']:
+            if getattr(self, attr):
+                modeladmin_attr = getattr(modeladmin, attr)
+                cast_fn = type(modeladmin_attr)
+                modeladmin_attr += cast_fn(getattr(self, attr))
 
         if self.extension_options:
             for f in self.extension_options:
@@ -197,8 +190,10 @@ class ExtensionModelAdmin(admin.ModelAdmin):
             f[1]['classes'].append('collapse')
         elif f:   # assume called with "other" fields
             try:
-                self.fieldsets[1][1]['fields'].extend(f)
+                cast_fn = type(self.fieldsets[1][1]['fields'])
+                self.fieldsets[1][1]['fields'] += cast_fn(f)
             except IndexError:
                 # Fall back to first fieldset if second does not exist
                 # XXX This is really messy.
-                self.fieldsets[0][1]['fields'].extend(f)
+                cast_fn = type(self.fieldsets[0][1]['fields'])
+                self.fieldsets[0][1]['fields'] += f
